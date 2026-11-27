@@ -37,8 +37,8 @@ if [ -z "$PY" ]; then pkg_install python@3.12 "python3 python3-venv"; PY="$(comm
 "$PY" -c 'import venv' 2>/dev/null || pkg_install python@3.12 python3-venv
 ok "Python $("$PY" -V) at $PY"
 command -v node >/dev/null && ok "node $(node -v)" || warn "Node.js not found (only needed for 'npx skills'; skills are copied instead)"
-command -v claude >/dev/null || die "Claude Code CLI 'claude' not on PATH: https://docs.claude.com/claude-code"
-ok "claude $(claude --version 2>/dev/null | head -1)"
+if command -v claude >/dev/null; then ok "claude $(claude --version 2>/dev/null | head -1)"
+else warn "Claude Code CLI 'claude' not on PATH: the MCP entry is written to ~/.claude.json directly"; fi
 
 mkdir -p "$TOOLS" "$LIB/openverse" "$LIB/test" "$SKILLS"; ok "created $TOOLS and $LIB"
 
@@ -67,8 +67,19 @@ case ":$PATH:" in *":$HOME/.local/bin:"*) ;; *)
   warn "added ~/.local/bin to PATH in $RC (open a new terminal)";; esac
 ok "earshot CLI linked into ~/.local/bin"
 
-claude mcp remove earshot --scope user >/dev/null 2>&1 || true
-claude mcp add earshot --scope user -e EARSHOT_THREADS=3 -- "$VPY" -m earshot mcp
+if command -v claude >/dev/null; then
+  claude mcp remove earshot --scope user >/dev/null 2>&1 || true
+  claude mcp add earshot --scope user -e EARSHOT_THREADS=3 -- "$VPY" -m earshot mcp
+else
+  "$PY" - "$VPY" <<'PYEOF'
+import json, sys, pathlib
+p = pathlib.Path.home() / ".claude.json"
+d = json.loads(p.read_text()) if p.exists() else {}
+d.setdefault("mcpServers", {})["earshot"] = {"type": "stdio", "command": sys.argv[1], "args": ["-m", "earshot", "mcp"],
+                                              "env": {"EARSHOT_THREADS": "3"}}
+p.write_text(json.dumps(d, indent=2))
+PYEOF
+fi
 ok "MCP server 'earshot' registered (user scope)"
 
 # ---------------- Phase 3: Real SFX ----------------
@@ -76,6 +87,8 @@ info "Phase 3: Real SFX"
 if [ -d "$TOOLS/clipwing-skills/.git" ]; then git -C "$TOOLS/clipwing-skills" pull -q --ff-only || warn "clipwing: pull failed, using existing clone"; else git clone -q https://github.com/Clipwing/skills.git "$TOOLS/clipwing-skills"; fi
 [ -f "$SKILLS/real-sfx/config.json" ] && cp "$SKILLS/real-sfx/config.json" "$TOOLS/real-sfx-config.backup.json"
 rm -rf "$SKILLS/real-sfx" && cp -R "$TOOLS/clipwing-skills/skills/real-sfx" "$SKILLS/real-sfx"
+if [ -d "$KIT/sfx-library-starter" ] && [ ! -d "$LIB/starter" ]; then cp -R "$KIT/sfx-library-starter" "$LIB/starter"; fi
+[ -d "$LIB/starter" ] && ok "starter library: $(find "$LIB/starter" -name '*.mp3' | wc -l | tr -d ' ') CC0 sounds screened by earshot in $LIB/starter"
 (cd "$SKILLS/real-sfx" && "$PY" scripts/setup.py add-library sfx-library "$LIB" --index >/dev/null && "$PY" scripts/setup.py check) || warn "real-sfx check reported a problem (see above)"
 ok "real-sfx installed; ~/sfx-library is its main library ($(find "$SKILLS/real-sfx/vendor" -name '*.mp3' | wc -l | tr -d ' ') bundled uisfx files)"
 
@@ -95,5 +108,5 @@ ok "~/.claude/CLAUDE.md has the Sound Design section"
 (cd "$LIB/test" && "$VPY" -m earshot make "a soft bright chime" -o test_chime.wav) && ok "earshot rendered $LIB/test/test_chime.wav"
 "$PY" "$TOOLS/openverse-audio/openverse_sfx.py" --query "ui click" --license cc0 --limit 2 --download-dir "$LIB/openverse" && ok "Openverse search + download"
 (cd "$SKILLS/real-sfx" && "$PY" scripts/build_index.py >/dev/null 2>&1) || true
-claude mcp list 2>&1 | grep -i earshot || warn "earshot not listed by 'claude mcp list'"
+if command -v claude >/dev/null; then claude mcp list 2>&1 | grep -i earshot || warn "earshot not listed by 'claude mcp list'"; fi
 info "Done. Restart Claude Code to load the new skills and MCP server."

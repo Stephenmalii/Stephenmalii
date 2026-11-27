@@ -97,13 +97,13 @@ def record_for(item):
     }
 
 
-def download(item, rec, out_dir: Path, query):
+def download(item, rec, out_dir: Path, query, subdir=None):
     url = item.get("url")
     if not url:
         return None, "no audio url"
     ext = (item.get("filetype") or Path(urllib.parse.urlparse(url).path).suffix.lstrip(".") or "mp3").lower()
     name = f"{safe_name(item.get('title'))}__{safe_name(item.get('creator'), 30)}__{(item.get('id') or '')[:8]}.{ext}"
-    sub = out_dir / safe_name(query, 40)
+    sub = out_dir / (subdir or safe_name(query, 40))
     sub.mkdir(parents=True, exist_ok=True)
     path = sub / name
     if path.exists() and path.stat().st_size > 0:
@@ -156,6 +156,7 @@ def main():
     p.add_argument("--source", help="restrict to a source, e.g. freesound, jamendo, wikimedia_audio")
     p.add_argument("--allow-mature", action="store_true", help="include results flagged mature")
     p.add_argument("--download-dir", help="download results here and log ATTRIBUTION.md + metadata.json")
+    p.add_argument("--subdir", help="folder inside --download-dir (default: from the query), e.g. whoosh")
     p.add_argument("--json", action="store_true", help="print machine-readable JSON instead of a table")
     args = p.parse_args()
 
@@ -177,7 +178,7 @@ def main():
         logged = []
         for item, rec in zip(items, records):
             try:
-                path, status = download(item, rec, out_dir, args.query)
+                path, status = download(item, rec, out_dir, args.query, args.subdir)
             except Exception as e:
                 rec["download_status"] = f"failed: {e}"
                 continue

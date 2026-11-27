@@ -76,6 +76,9 @@ $Rs = Join-Path $Skills 'real-sfx'
 if (Test-Path (Join-Path $Rs 'config.json')) { Copy-Item (Join-Path $Rs 'config.json') (Join-Path $Tools 'real-sfx-config.backup.json') -Force }
 if (Test-Path $Rs) { Remove-Item -Recurse -Force $Rs }
 Copy-Item -Recurse (Join-Path $Cw 'skills\real-sfx') $Rs
+$Starter = Join-Path $Lib 'starter'
+if ((Test-Path (Join-Path $Kit 'sfx-library-starter')) -and -not (Test-Path $Starter)) { Copy-Item -Recurse (Join-Path $Kit 'sfx-library-starter') $Starter }
+if (Test-Path $Starter) { Ok "starter library: $((Get-ChildItem -Recurse -Filter *.mp3 $Starter).Count) CC0 sounds in $Starter" }
 Push-Location $Rs
 & $Py scripts\setup.py add-library sfx-library $Lib --index | Out-Null
 & $Py scripts\setup.py check

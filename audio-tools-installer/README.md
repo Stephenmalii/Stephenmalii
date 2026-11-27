@@ -8,6 +8,11 @@ One script that installs and wires three sound-design tools into Claude Code glo
 | [Real SFX](https://github.com/Clipwing/skills/tree/main/skills/real-sfx) | skill `real-sfx` with 936 bundled CC0 uisfx files (78 cues x 12 packs); `~/sfx-library` registered as its main library | `~/.claude/skills/real-sfx` |
 | Openverse Audio | `openverse_sfx.py` (no dependencies) + skill `openverse-audio`; downloads log `ATTRIBUTION.md` + `metadata.json` | `~/ai-audio-tools/openverse-audio`, `~/sfx-library/openverse` |
 
+A starter library of 99 CC0 recordings (whoosh, hit, riser, sub drop, click, typing, glitch, camera, water, coin, foley,
+ambience, paper), downloaded from Openverse and screened by earshot (45 files that did not sound like their category were
+rejected), is copied to `~/sfx-library/starter` with its `ATTRIBUTION.md`. `build_starter_library.py` +
+`screen_library.py` rebuild or extend it.
+
 It also appends a "Sound Design & Audio Workflow" section to `~/.claude/CLAUDE.md` (once) and runs the verification tests.
 
 ## Run
