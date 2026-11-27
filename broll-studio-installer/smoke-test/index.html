@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --ground: #14161a;
+        --card: #1f2329;
+        --ink: #f4f1ea;
+        --muted: #9aa0a8;
+        --accent: #ff7a1a;
+        --font-display: "Helvetica Neue", Arial, sans-serif;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+      #root { position: relative; width: 100%; height: 100%; font-family: var(--font-display); }
+      #card {
+        position: absolute; left: 160px; bottom: 180px; width: 760px; height: 260px;
+        border-radius: 28px; background: var(--card);
+      }
+      #bar { position: absolute; left: 160px; bottom: 210px; height: 200px; width: 10px; border-radius: 5px; background: var(--accent); }
+      #label { position: absolute; left: 216px; bottom: 360px; color: var(--muted); font-size: 30px; font-weight: 500; letter-spacing: 0.02em; }
+      #stat { position: absolute; left: 212px; bottom: 214px; color: var(--ink); font-size: 120px; font-weight: 700; letter-spacing: -0.04em; line-height: 1.1; }
+      #stat span { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="3" data-width="1920" data-height="1080">
+      <div id="card" class="clip" data-start="0" data-duration="3" data-track-index="0"></div>
+      <div id="bar" class="clip" data-start="0" data-duration="3" data-track-index="1"></div>
+      <div id="label" class="clip" data-start="0" data-duration="3" data-track-index="2">B-ROLL STUDIO · SMOKE TEST</div>
+      <div id="stat" class="clip" data-start="0" data-duration="3" data-track-index="3"><b id="num">0</b><span>%</span></div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const counter = { v: 0 };
+      tl.fromTo(["#card", "#bar", "#label", "#stat"], { x: -40 }, { x: 0, duration: 0.6, ease: "power4.out" }, 0)
+        .fromTo("#bar", { scaleY: 0.15, transformOrigin: "bottom" }, { scaleY: 1, duration: 0.6, ease: "power3.out" }, 0.1)
+        .fromTo("#label", { opacity: 0.4 }, { opacity: 1, duration: 0.5, ease: "power3.out" }, 0.1)
+        .to(counter, { v: 100, duration: 1.4, ease: "power2.out", onUpdate: () => { document.getElementById("num").textContent = Math.round(counter.v); } }, 0.3)
+        .to(["#card", "#bar", "#label", "#stat"], { x: -60, opacity: 0, filter: "blur(8px)", duration: 0.4, ease: "power3.in", stagger: { each: 0.04, from: "end" } }, 2.5);
+      window.__timelines["main"] = tl;
+      tl.seek(0);
+    </script>
+  </body>
+</html>
